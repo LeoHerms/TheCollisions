@@ -88,6 +88,13 @@ vector<pair<int, int>> tracePath(cell cellDetails[][COL], Pair dest)
     }
 
     Path.push(make_pair(row, col));
+    // Check if there is a wait time
+    if (cellDetails[row][col].waitTime > 0) {
+        for (int i = 0; i < cellDetails[row][col].waitTime; i++) {
+            Path.push(make_pair(row, col));
+        }
+    }
+
     while (!Path.empty()) {
         pair<int, int> p = Path.top();
         path.push_back(p);
@@ -271,19 +278,19 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
                     // There will be a tweakable parameter for how long a bot should wait before rerouting.
-                    // int waitTime = occupationLength(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
-                    //
-                    // if (waitTime < 3) {
-                    //     // Then we wait 3 times
-                    //     // Add this to reservation table
-                    //     for (int k = 0; k < waitTime; k++) {
-                    //         reservationTable[make_pair(i-1, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
-                    //         cellDetails[i][j].g += 1.0;
-                    //     }
-                    // } else {
-                    //     continue;
-                    // }
-                    continue;
+                    int waitTime = occupationLength(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+
+                    if (waitTime < 3) {
+                        // Then we wait 3 times
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[i][j].g += 1.0;
+                            cellDetails[i][j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 gNew = cellDetails[i][j].g + 1.0;
                 hNew = calculateHValue(i - 1, j, dest);
@@ -336,7 +343,20 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 if (isOccupiedAtThisTime(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
-                    continue;
+                    // There will be a tweakable parameter for how long a bot should wait before rerouting.
+                    int waitTime = occupationLength(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+
+                    if (waitTime < 3) {
+                        // Then we wait 3 times
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[i][j].g += 1.0;
+                            cellDetails[i][j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 gNew = cellDetails[i][j].g + 1.0;
                 hNew = calculateHValue(i + 1, j, dest);
@@ -390,20 +410,19 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
                     // There will be a tweakable parameter for how long a bot should wait before rerouting.
-                    // int waitTime = occupationLength(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
-                    //
-                    // if (waitTime < 3) {
-                    //     // Then we wait 3 times
-                    //     // Add this to reservation table
-                    //     for (int k = 0; k < waitTime; k++) {
-                    //         reservationTable[make_pair(i-1, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
-                    //         cellDetails[i][j].g += 1.0;
-                    //         cellDetails[i][j].waitTime += 1;
-                    //     }
-                    // } else {
-                    //     continue;
-                    // }
-                    continue;
+                    int waitTime = occupationLength(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+
+                    if (waitTime < 3) {
+                        // Then we wait 3 times
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[i][j].g += 1.0;
+                            cellDetails[i][j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 gNew = cellDetails[i][j].g + 1.0;
                 hNew = calculateHValue(i, j + 1, dest);
@@ -417,10 +436,8 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 // If it is on the open list already, check
                 // to see if this path to that square is
                 // better, using 'f' cost as the measure.
-                if (cellDetails[i][j + 1].f == FLT_MAX
-                    || cellDetails[i][j + 1].f > fNew) {
-                    openList.insert(make_pair(
-                            fNew, make_pair(i, j + 1)));
+                if (cellDetails[i][j + 1].f == FLT_MAX || cellDetails[i][j + 1].f > fNew) {
+                    openList.insert(make_pair(fNew, make_pair(i, j + 1)));
 
                     // Update the details of this cell
                     cellDetails[i][j + 1].f = fNew;
@@ -458,7 +475,20 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 if (isOccupiedAtThisTime(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
-                    continue;
+                    // There will be a tweakable parameter for how long a bot should wait before rerouting.
+                    int waitTime = occupationLength(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+
+                    if (waitTime < 3) {
+                        // Then we wait 3 times
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[i][j].g += 1.0;
+                            cellDetails[i][j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 gNew = cellDetails[i][j].g + 1.0;
                 hNew = calculateHValue(i, j - 1, dest);

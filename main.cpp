@@ -88,14 +88,14 @@ int main()
     vector<pair<int, int>> path2 = aStarSearch(grid, src2, dest2, reservationTable, 0);
 
     // 3rd source and destination
-    // Pair src3 = make_pair(0, 0);
-    // Pair dest3 = make_pair(3, 2);
-    // vector<pair<int, int>> path3 = aStarSearch(grid, src3, dest3, reservationTable, 0);
-    //
-    // // 4th source and destination (opposite diagonal)
-    // Pair src4 = make_pair(8, 0);
-    // Pair dest4 = make_pair(7, 1);
-    // vector<pair<int, int>> path4 = aStarSearch(grid, src4, dest4, reservationTable, 0);
+    Pair src3 = make_pair(3, 0);
+    Pair dest3 = make_pair(5, 0);
+    vector<pair<int, int>> path3 = aStarSearch(grid, src3, dest3, reservationTable, 0);
+
+    // 4th source and destination (opposite diagonal)
+    Pair src4 = make_pair(2, 2);
+    Pair dest4 = make_pair(5, 2);
+    vector<pair<int, int>> path4 = aStarSearch(grid, src4, dest4, reservationTable, 0);
 
     // Print the paths
     cout << "Path from the source to the destination-1: ";
@@ -110,17 +110,17 @@ int main()
     }
     cout << endl;
 
-    // cout << "Path from the source to the destination-3: ";
-    // for (int i = 0; i < path3.size(); i++) {
-    //     cout << "(" << path3[i].first << ", " << path3[i].second << ") ";
-    // }
-    // cout << endl;
-    //
-    // cout << "Path from the source to the destination-4: ";
-    // for (int i = 0; i < path4.size(); i++) {
-    //     cout << "(" << path4[i].first << ", " << path4[i].second << ") ";
-    // }
-    // cout << endl;
+    cout << "Path from the source to the destination-3: ";
+    for (int i = 0; i < path3.size(); i++) {
+        cout << "(" << path3[i].first << ", " << path3[i].second << ") ";
+    }
+    cout << endl;
+
+    cout << "Path from the source to the destination-4: ";
+    for (int i = 0; i < path4.size(); i++) {
+        cout << "(" << path4[i].first << ", " << path4[i].second << ") ";
+    }
+    cout << endl;
 
     // Using these vectors, we can find where the intersections are.
     // Create a new vector to store these paths
@@ -128,8 +128,8 @@ int main()
 
     allPaths.push_back(path1);
     allPaths.push_back(path2);
-    // allPaths.push_back(path3);
-    // allPaths.push_back(path4);
+    allPaths.push_back(path3);
+    allPaths.push_back(path4);
 
     // Find the intersection
     vector<pair<int, intersection>> intersections = findIntersections(allPaths);
