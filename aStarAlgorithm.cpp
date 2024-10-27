@@ -133,6 +133,17 @@ int occupationLength(map<pair<int, int>, vector<int>> & reservationTable, int ro
     return length;
 }
 
+bool canIWaitHereForThisLong(map<pair<int, int>, vector<int>> & reservationTable, int row, int col, int time, int waitTime) {
+    // Check if the cell is occupied for the next waitTime
+    for (int i = 0; i < waitTime; i++) {
+        if (isOccupiedAtThisTime(reservationTable, row, col, time + i)) {
+            return false;
+        }
+    }
+    return true;
+
+}
+
 // A Function to find the shortest path between
 // a given source cell to a destination cell according
 // to A* Search Algorithm
@@ -280,8 +291,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     // There will be a tweakable parameter for how long a bot should wait before rerouting.
                     int waitTime = occupationLength(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
+                    // Add this: && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
                     if (waitTime < 3) {
-                        // Then we wait 3 times
                         // Add this to reservation table
                         for (int k = 0; k < waitTime; k++) {
                             reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
@@ -346,6 +358,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     // There will be a tweakable parameter for how long a bot should wait before rerouting.
                     int waitTime = occupationLength(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
                     if (waitTime < 3) {
                         // Then we wait 3 times
                         // Add this to reservation table
@@ -412,7 +425,8 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     // There will be a tweakable parameter for how long a bot should wait before rerouting.
                     int waitTime = occupationLength(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
-                    if (waitTime < 3) {
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
+                    if (waitTime < 3 && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)) {
                         // Then we wait 3 times
                         // Add this to reservation table
                         for (int k = 0; k < waitTime; k++) {
@@ -478,6 +492,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     // There will be a tweakable parameter for how long a bot should wait before rerouting.
                     int waitTime = occupationLength(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
                     if (waitTime < 3) {
                         // Then we wait 3 times
                         // Add this to reservation table
