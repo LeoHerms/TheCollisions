@@ -308,6 +308,8 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             }
         }
 
+        // COULD DO ONE CENTRAL DESTINATION CHECK FOR OCCUPANCY AND SWAPS
+
         /*
          Generating all the 4 successors of this cell
 
@@ -329,9 +331,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // To store the 'g', 'h' and 'f' of the 4 successors
         double gNew, hNew, fNew;
-
-        // THERE MIGHT BE A NICHE CASE WHERE DESTINATION NODE DOESN'T CHECK OCCUPANCY!!!
-        // ADD EDGE RESERVATION FOR NON-DESTINATION NODES
 
         //----------- 1st Successor (North) ------------
 
