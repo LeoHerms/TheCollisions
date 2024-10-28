@@ -11,6 +11,9 @@ typedef pair<int, int> Pair;
 // Creating a shortcut for pair<int, pair<int, int>> type
 typedef pair<double, pair<int, int> > pPair;
 
+// I need something to detect the transition conflicts
+typedef pair<pair<int, int>, pair<int, int>> Edge;
+
 // A structure to hold the necessary parameters
 struct cell {
     // Row and Column index of its parent
@@ -144,10 +147,22 @@ bool canIWaitHereForThisLong(map<pair<int, int>, vector<int>> & reservationTable
 
 }
 
+bool isEdgeOccupiedAtThisTime(map<Edge, vector<int>> & edgeReservationTable, pair<int, int> startNode, pair<int, int> endNode, int time) {
+    if (edgeReservationTable.find(make_pair(endNode, startNode)) != edgeReservationTable.end()) {
+        vector<int> times = edgeReservationTable[make_pair(endNode, startNode)];
+        for (int i = 0; i < times.size(); i++) {
+            if (times[i] == time) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // A Function to find the shortest path between
 // a given source cell to a destination cell according
 // to A* Search Algorithm
-vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pair<int, int>, vector<int>> & reservationTable, int startTime)
+vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pair<int, int>, vector<int>> & reservationTable, map<Edge, vector<int>> & edgeReservationTable, int startTime)
 {
     // If the source is out of range
     if (isValid(src.first, src.second) == false) {
@@ -237,6 +252,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         j = p.second.second;
         closedList[i][j] = true;
 
+        // Start making an edge reservation
+        pair<int, int> startNode = make_pair(i, j);
+
         int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 1; // Arrival time at successor cell
         if (!isOccupiedAtThisTime(reservationTable, i, j, arrivalTime)) {
             reservationTable[make_pair(i, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
@@ -264,10 +282,16 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         // To store the 'g', 'h' and 'f' of the 4 successors
         double gNew, hNew, fNew;
 
+        // THERE MIGHT BE A NICHE CASE WHERE DESTINATION NODE DOESN'T CHECK OCCUPANCY!!!
+        // ADD EDGE RESERVATION FOR NON-DESTINATION NODES
+
         //----------- 1st Successor (North) ------------
 
         // Only process this cell if this is a valid one
         if (isValid(i - 1, j) == true) {
+            // Make the end node for the edge reservation
+            pair<int, int> endNode = make_pair(i-1, j);
+
             // If the destination cell is the same as the current successor
             if (isDestination(i - 1, j, dest) == true) {
                 // Set the Parent of the destination cell
@@ -277,14 +301,23 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
 
-                int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                reservationTable[make_pair(i-1, j)].push_back(lastTime); // Mark cell occupied at new arrival time
+                // Check if the edge is occupied
+                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
+                    // Make the edge reservation
+                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
 
-                return path;
+                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                    reservationTable[make_pair(i-1, j)].push_back(lastTime); // Mark cell occupied at new arrival time
+
+                    return path;
+                }
             }
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i - 1][j] == false && isUnBlocked(grid, i - 1, j) == true) {
+                // Flag for execution
+                bool bodyExec = false;
+
                 if (isOccupiedAtThisTime(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
@@ -301,32 +334,36 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                             cellDetails[i][j].waitTime += 1;
                         }
                     } else {
-                        continue;
+                        // Don't execute the rest of the if here
+                        bodyExec = true;
                     }
                 }
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i - 1, j, dest);
-                fNew = gNew + hNew;
 
-                // If it isn’t on the open list, add it to
-                // the open list. Make the current square
-                // the parent of this square. Record the
-                // f, g, and h costs of the square cell
-                //                OR
-                // If it is on the open list already, check
-                // to see if this path to that square is
-                // better, using 'f' cost as the measure.
-                if (cellDetails[i - 1][j].f == FLT_MAX
-                    || cellDetails[i - 1][j].f > fNew) {
-                    openList.insert(make_pair(
-                            fNew, make_pair(i - 1, j)));
+                if (!bodyExec) {
+                    gNew = cellDetails[i][j].g + 1.0;
+                    hNew = calculateHValue(i - 1, j, dest);
+                    fNew = gNew + hNew;
 
-                    // Update the details of this cell
-                    cellDetails[i - 1][j].f = fNew;
-                    cellDetails[i - 1][j].g = gNew;
-                    cellDetails[i - 1][j].h = hNew;
-                    cellDetails[i - 1][j].parent_i = i;
-                    cellDetails[i - 1][j].parent_j = j;
+                    // If it isn’t on the open list, add it to
+                    // the open list. Make the current square
+                    // the parent of this square. Record the
+                    // f, g, and h costs of the square cell
+                    //                OR
+                    // If it is on the open list already, check
+                    // to see if this path to that square is
+                    // better, using 'f' cost as the measure.
+                    if (cellDetails[i - 1][j].f == FLT_MAX
+                        || cellDetails[i - 1][j].f > fNew) {
+                        openList.insert(make_pair(
+                                fNew, make_pair(i - 1, j)));
+
+                        // Update the details of this cell
+                        cellDetails[i - 1][j].f = fNew;
+                        cellDetails[i - 1][j].g = gNew;
+                        cellDetails[i - 1][j].h = hNew;
+                        cellDetails[i - 1][j].parent_i = i;
+                        cellDetails[i - 1][j].parent_j = j;
+                        }
                 }
             }
         }
@@ -335,6 +372,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i + 1, j) == true) {
+            // Make the end node for the edge reservation
+            pair<int, int> endNode = make_pair(i+1, j);
+
             // If the destination cell is the same as the current successor
             if (isDestination(i + 1, j, dest) == true) {
                 // Set the Parent of the destination cell
@@ -344,14 +384,23 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
 
-                int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                reservationTable[make_pair(i+1, j)].push_back(lastTime); // Mark cell occupied at new arrival time
+                // Check if the edge is occupied
+                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
+                    // Make the edge reservation
+                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time inserted is when we arrive at the end node
 
-                return path;
+                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                    reservationTable[make_pair(i+1, j)].push_back(lastTime); // Mark cell occupied at new arrival time
+
+                    return path;
+                }
             }
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i + 1][j] == false && isUnBlocked(grid, i + 1, j) == true) {
+                // Flag for execution
+                bool bodyExec = false;
+
                 if (isOccupiedAtThisTime(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
@@ -368,31 +417,35 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                             cellDetails[i][j].waitTime += 1;
                         }
                     } else {
-                        continue;
+                        // Don't execute the rest of the if here
+                        bodyExec = true;
                     }
                 }
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i + 1, j, dest);
-                fNew = gNew + hNew;
 
-                // If it isn’t on the open list, add it to
-                // the open list. Make the current square
-                // the parent of this square. Record the
-                // f, g, and h costs of the square cell
-                //                OR
-                // If it is on the open list already, check
-                // to see if this path to that square is
-                // better, using 'f' cost as the measure.
-                if (cellDetails[i + 1][j].f == FLT_MAX
-                    || cellDetails[i + 1][j].f > fNew) {
-                    openList.insert(make_pair(
-                            fNew, make_pair(i + 1, j)));
-                    // Update the details of this cell
-                    cellDetails[i + 1][j].f = fNew;
-                    cellDetails[i + 1][j].g = gNew;
-                    cellDetails[i + 1][j].h = hNew;
-                    cellDetails[i + 1][j].parent_i = i;
-                    cellDetails[i + 1][j].parent_j = j;
+                if (!bodyExec) {
+                    gNew = cellDetails[i][j].g + 1.0;
+                    hNew = calculateHValue(i + 1, j, dest);
+                    fNew = gNew + hNew;
+
+                    // If it isn’t on the open list, add it to
+                    // the open list. Make the current square
+                    // the parent of this square. Record the
+                    // f, g, and h costs of the square cell
+                    //                OR
+                    // If it is on the open list already, check
+                    // to see if this path to that square is
+                    // better, using 'f' cost as the measure.
+                    if (cellDetails[i + 1][j].f == FLT_MAX
+                        || cellDetails[i + 1][j].f > fNew) {
+                        openList.insert(make_pair(
+                                fNew, make_pair(i + 1, j)));
+                        // Update the details of this cell
+                        cellDetails[i + 1][j].f = fNew;
+                        cellDetails[i + 1][j].g = gNew;
+                        cellDetails[i + 1][j].h = hNew;
+                        cellDetails[i + 1][j].parent_i = i;
+                        cellDetails[i + 1][j].parent_j = j;
+                        }
                 }
             }
         }
@@ -401,6 +454,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i, j + 1) == true) {
+            // Make the end node for the edge reservation
+            pair<int, int> endNode = make_pair(i, j+1);
+
             // If the destination cell is the same as the current successor
             if (isDestination(i, j + 1, dest) == true) {
                 // Set the Parent of the destination cell
@@ -410,15 +466,20 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
 
-                int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                reservationTable[make_pair(i, j+1)].push_back(lastTime); // Mark cell occupied at new arrival time
+                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
+                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                    reservationTable[make_pair(i, j+1)].push_back(lastTime); // Mark cell occupied at new arrival time
 
-                return path;
+                    return path;
+                }
             }
 
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i][j + 1] == false && isUnBlocked(grid, i, j + 1) == true) {
+                // Flag for execution
+                bool bodyExec = false;
+
                 if (isOccupiedAtThisTime(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
@@ -435,30 +496,34 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                             cellDetails[i][j].waitTime += 1;
                         }
                     } else {
-                        continue;
+                        // Don't execute the rest of the if here
+                        bodyExec = true;
                     }
                 }
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i, j + 1, dest);
-                fNew = gNew + hNew;
 
-                // If it isn’t on the open list, add it to
-                // the open list. Make the current square
-                // the parent of this square. Record the
-                // f, g, and h costs of the square cell
-                //                OR
-                // If it is on the open list already, check
-                // to see if this path to that square is
-                // better, using 'f' cost as the measure.
-                if (cellDetails[i][j + 1].f == FLT_MAX || cellDetails[i][j + 1].f > fNew) {
-                    openList.insert(make_pair(fNew, make_pair(i, j + 1)));
+                if (!bodyExec) {
+                    gNew = cellDetails[i][j].g + 1.0;
+                    hNew = calculateHValue(i, j + 1, dest);
+                    fNew = gNew + hNew;
 
-                    // Update the details of this cell
-                    cellDetails[i][j + 1].f = fNew;
-                    cellDetails[i][j + 1].g = gNew;
-                    cellDetails[i][j + 1].h = hNew;
-                    cellDetails[i][j + 1].parent_i = i;
-                    cellDetails[i][j + 1].parent_j = j;
+                    // If it isn’t on the open list, add it to
+                    // the open list. Make the current square
+                    // the parent of this square. Record the
+                    // f, g, and h costs of the square cell
+                    //                OR
+                    // If it is on the open list already, check
+                    // to see if this path to that square is
+                    // better, using 'f' cost as the measure.
+                    if (cellDetails[i][j + 1].f == FLT_MAX || cellDetails[i][j + 1].f > fNew) {
+                        openList.insert(make_pair(fNew, make_pair(i, j + 1)));
+
+                        // Update the details of this cell
+                        cellDetails[i][j + 1].f = fNew;
+                        cellDetails[i][j + 1].g = gNew;
+                        cellDetails[i][j + 1].h = hNew;
+                        cellDetails[i][j + 1].parent_i = i;
+                        cellDetails[i][j + 1].parent_j = j;
+                    }
                 }
             }
         }
@@ -467,6 +532,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i, j - 1) == true) {
+            // Make the end node for the edge reservation
+            pair<int, int> endNode = make_pair(i, j-1);
+
             // If the destination cell is the same as the
             // current successor
             if (isDestination(i, j - 1, dest) == true) {
@@ -477,15 +545,20 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
 
-                int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                reservationTable[make_pair(i, j-1)].push_back(lastTime); // Mark cell occupied at new arrival time
+                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
+                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                    reservationTable[make_pair(i, j-1)].push_back(lastTime); // Mark cell occupied at new arrival time
 
-                return path;
+                    return path;
+                }
             }
 
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i][j - 1] == false && isUnBlocked(grid, i, j - 1) == true) {
+                // Flag for execution
+                bool bodyExec = false;
+
                 if (isOccupiedAtThisTime(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
                     // If we find that waiting is better, we should wait. Else, continue and reroute.
@@ -502,32 +575,36 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                             cellDetails[i][j].waitTime += 1;
                         }
                     } else {
-                        continue;
+                        // Don't execute the rest of the if here
+                        bodyExec = true;
                     }
                 }
-                gNew = cellDetails[i][j].g + 1.0;
-                hNew = calculateHValue(i, j - 1, dest);
-                fNew = gNew + hNew;
 
-                // If it isn’t on the open list, add it to
-                // the open list. Make the current square
-                // the parent of this square. Record the
-                // f, g, and h costs of the square cell
-                //                OR
-                // If it is on the open list already, check
-                // to see if this path to that square is
-                // better, using 'f' cost as the measure.
-                if (cellDetails[i][j - 1].f == FLT_MAX
-                    || cellDetails[i][j - 1].f > fNew) {
-                    openList.insert(make_pair(
-                            fNew, make_pair(i, j - 1)));
+                if (!bodyExec) {
+                    gNew = cellDetails[i][j].g + 1.0;
+                    hNew = calculateHValue(i, j - 1, dest);
+                    fNew = gNew + hNew;
 
-                    // Update the details of this cell
-                    cellDetails[i][j - 1].f = fNew;
-                    cellDetails[i][j - 1].g = gNew;
-                    cellDetails[i][j - 1].h = hNew;
-                    cellDetails[i][j - 1].parent_i = i;
-                    cellDetails[i][j - 1].parent_j = j;
+                    // If it isn’t on the open list, add it to
+                    // the open list. Make the current square
+                    // the parent of this square. Record the
+                    // f, g, and h costs of the square cell
+                    //                OR
+                    // If it is on the open list already, check
+                    // to see if this path to that square is
+                    // better, using 'f' cost as the measure.
+                    if (cellDetails[i][j - 1].f == FLT_MAX
+                        || cellDetails[i][j - 1].f > fNew) {
+                        openList.insert(make_pair(
+                                fNew, make_pair(i, j - 1)));
+
+                        // Update the details of this cell
+                        cellDetails[i][j - 1].f = fNew;
+                        cellDetails[i][j - 1].g = gNew;
+                        cellDetails[i][j - 1].h = hNew;
+                        cellDetails[i][j - 1].parent_i = i;
+                        cellDetails[i][j - 1].parent_j = j;
+                        }
                 }
             }
         }

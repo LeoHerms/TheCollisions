@@ -17,6 +17,9 @@ typedef pair<int, int> Pair;
 // Creating a shortcut for pair<int, pair<int, int>> type
 typedef pair<double, pair<int, int> > pPair;
 
+// I need something to detect the transition conflicts
+typedef pair<pair<int, int>, pair<int, int>> Edge;
+
 // A structure to hold the necessary parameters
 struct cell;
 
@@ -42,7 +45,7 @@ vector<pair<int, int>> tracePath(cell cellDetails[][COL], Pair dest);
 // A Function to find the shortest path between
 // a given source cell to a destination cell according
 // to A* Search Algorithm
-vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pair<int, int>, vector<int>> & reservationTable, int startTime);
+vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pair<int, int>, vector<int>> & reservationTable, map<Edge, vector<int>> & edgeReservationTable, int startTime);
 
 
 #endif //ASTARALGORITHM_H
