@@ -80,18 +80,18 @@ int main()
 
     // Source is the left-most bottom-most corner
     Pair src1 = make_pair(4, 0);
-    Pair dest1 = make_pair(4, 3);   // 5, 0
+    Pair dest1 = make_pair(4, 1);   // 5, 0
     vector<pair<int, int>> path1 = aStarSearch(grid, src1, dest1, reservationTable, edgeReservationTable, 0);
 
     // 2nd source and destination
-    Pair src2 = make_pair(2, 2);
-    Pair dest2 = make_pair(5, 2);
+    Pair src2 = make_pair(4, 1);
+    Pair dest2 = make_pair(4, 0);
     vector<pair<int, int>> path2 = aStarSearch(grid, src2, dest2, reservationTable, edgeReservationTable, 0);   // Added for more commentary
 
     // 3rd source and destination
-    Pair src3 = make_pair(3, 3);
-    Pair dest3 = make_pair(5, 3);
-    vector<pair<int, int>> path3 = aStarSearch(grid, src3, dest3, reservationTable, edgeReservationTable, 0);
+    // Pair src3 = make_pair(3, 3);
+    // Pair dest3 = make_pair(5, 3);
+    // vector<pair<int, int>> path3 = aStarSearch(grid, src3, dest3, reservationTable, edgeReservationTable, 0);
 
     // 4th source and destination (opposite diagonal)
     // Pair src4 = make_pair(2, 2);
@@ -111,11 +111,11 @@ int main()
     }
     cout << endl;
 
-    cout << "Path from the source to the destination-3: ";
-    for (int i = 0; i < path3.size(); i++) {
-        cout << "(" << path3[i].first << ", " << path3[i].second << ") ";
-    }
-    cout << endl;
+    // cout << "Path from the source to the destination-3: ";
+    // for (int i = 0; i < path3.size(); i++) {
+    //     cout << "(" << path3[i].first << ", " << path3[i].second << ") ";
+    // }
+    // cout << endl;
 
     // cout << "Path from the source to the destination-4: ";
     // for (int i = 0; i < path4.size(); i++) {
@@ -129,7 +129,7 @@ int main()
 
     allPaths.push_back(path1);
     allPaths.push_back(path2);
-    allPaths.push_back(path3);
+    // allPaths.push_back(path3);
     // allPaths.push_back(path4);
 
     // Find the intersection

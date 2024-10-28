@@ -23,6 +23,9 @@ struct cell {
     double f, g, h;
     // Add a wait time
     int waitTime;
+
+    // is it a start?
+    bool isStart;
 };
 
 // A Utility Function to check whether given cell (row, col)
@@ -210,6 +213,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             cellDetails[i][j].h = FLT_MAX;
             cellDetails[i][j].parent_i = -1;
             cellDetails[i][j].parent_j = -1;
+            cellDetails[i][j].isStart = false;
         }
     }
 
@@ -219,8 +223,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
     cellDetails[i][j].f = 0.0;
     cellDetails[i][j].g = 0.0;
     cellDetails[i][j].h = 0.0;
-    cellDetails[i][j].parent_i = i;
-    cellDetails[i][j].parent_j = j;
+    cellDetails[i][j].parent_i = i;    // i
+    cellDetails[i][j].parent_j = j;    // j
+    cellDetails[i][j].isStart = true;
 
     /*
      Create an open list having information as-
@@ -256,6 +261,16 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 1; // Arrival time at successor cell
         if (!isOccupiedAtThisTime(reservationTable, i, j, arrivalTime)) {
+            // Before we add this to the reservation table, we need to check if the edge is occupied
+            if (!cellDetails[i][j].isStart) {
+                pair<int, int> startNode = make_pair(cellDetails[i][j].parent_i, cellDetails[i][j].parent_j);
+                if (isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 1)) {
+                    continue;
+                }
+            }
+
+            // This no worky yet because the next node is a destination node and we dont check swaps before returning paths.
+
             reservationTable[make_pair(i, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
         } else {
             // Get this node's parent and check how long to wait there for
@@ -266,6 +281,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
             // Check if the wait time is below our threshold and if it is check if we can wait that time
             // Add this: && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
+            // Should probably check in here to see if after waiting, if the edge might be occupied
             if (waitTime < 3) {
                 // Add this to reservation table
                 for (int k = 0; k < waitTime; k++) {
