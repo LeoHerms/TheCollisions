@@ -261,16 +261,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 1; // Arrival time at successor cell
         if (!isOccupiedAtThisTime(reservationTable, i, j, arrivalTime)) {
-            // Before we add this to the reservation table, we need to check if the edge is occupied
-            if (!cellDetails[i][j].isStart) {
-                pair<int, int> startNode = make_pair(cellDetails[i][j].parent_i, cellDetails[i][j].parent_j);
-                if (isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 1)) {
-                    continue;
-                }
-            }
-
-            // This no worky yet because the next node is a destination node and we dont check swaps before returning paths.
-
             reservationTable[make_pair(i, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
         } else {
             // Get this node's parent and check how long to wait there for
@@ -325,6 +315,32 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         if (isValid(i - 1, j) == true) {
             // If the destination cell is the same as the current successor
             if (isDestination(i - 1, j, dest) == true) {
+                // Lets first check if the cell is occupied
+                int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                if (!isOccupiedAtThisTime(reservationTable, i - 1, j, arrivalTime)) {
+                    reservationTable[make_pair(i - 1, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
+                } else {
+                    // Get this node's parent and check how long to wait there for
+                    int wait_i = cellDetails[i][j].parent_i;
+                    int wait_j = cellDetails[i][j].parent_j;
+
+                    int waitTime = occupationLength(reservationTable, wait_i, wait_j, startTime + static_cast<int>(cellDetails[i][j].g));
+
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
+                    // Add this: && canIWaitHereForThisLong(reservationTable, i - 1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
+                    // Should probably check in here to see if after waiting, if the edge might be occupied
+                    if (waitTime < 3) {
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(wait_i, wait_j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[wait_i][wait_j].g += 1.0;
+                            cellDetails[wait_i][wait_j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
                 // Set the Parent of the destination cell
                 cellDetails[i - 1][j].parent_i = i;
                 cellDetails[i - 1][j].parent_j = j;
@@ -369,6 +385,32 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         if (isValid(i + 1, j) == true) {
             // If the destination cell is the same as the current successor
             if (isDestination(i + 1, j, dest) == true) {
+                // Lets first check if the cell is occupied
+                int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                if (!isOccupiedAtThisTime(reservationTable, i + 1, j, arrivalTime)) {
+                    reservationTable[make_pair(i + 1, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
+                } else {
+                    // Get this node's parent and check how long to wait there for
+                    int wait_i = cellDetails[i][j].parent_i;
+                    int wait_j = cellDetails[i][j].parent_j;
+
+                    int waitTime = occupationLength(reservationTable, wait_i, wait_j, startTime + static_cast<int>(cellDetails[i][j].g));
+
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
+                    // Add this: && canIWaitHereForThisLong(reservationTable, i - 1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
+                    // Should probably check in here to see if after waiting, if the edge might be occupied
+                    if (waitTime < 3) {
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(wait_i, wait_j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[wait_i][wait_j].g += 1.0;
+                            cellDetails[wait_i][wait_j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
                 // Set the Parent of the destination cell
                 cellDetails[i + 1][j].parent_i = i;
                 cellDetails[i + 1][j].parent_j = j;
@@ -412,6 +454,32 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         if (isValid(i, j + 1) == true) {
             // If the destination cell is the same as the current successor
             if (isDestination(i, j + 1, dest) == true) {
+                // Lets first check if the cell is occupied
+                int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                if (!isOccupiedAtThisTime(reservationTable, i, j+1, arrivalTime)) {
+                    reservationTable[make_pair(i, j+1)].push_back(arrivalTime); // Mark cell occupied at new arrival time
+                } else {
+                    // Get this node's parent and check how long to wait there for
+                    int wait_i = cellDetails[i][j].parent_i;
+                    int wait_j = cellDetails[i][j].parent_j;
+
+                    int waitTime = occupationLength(reservationTable, wait_i, wait_j, startTime + static_cast<int>(cellDetails[i][j].g));
+
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
+                    // Add this: && canIWaitHereForThisLong(reservationTable, i - 1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
+                    // Should probably check in here to see if after waiting, if the edge might be occupied
+                    if (waitTime < 3) {
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(wait_i, wait_j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[wait_i][wait_j].g += 1.0;
+                            cellDetails[wait_i][wait_j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
                 // Set the Parent of the destination cell
                 cellDetails[i][j + 1].parent_i = i;
                 cellDetails[i][j + 1].parent_j = j;
@@ -455,6 +523,32 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         if (isValid(i, j - 1) == true) {
             // If the destination cell is the same as the current successor
             if (isDestination(i, j - 1, dest) == true) {
+                // Lets first check if the cell is occupied
+                int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
+                if (!isOccupiedAtThisTime(reservationTable, i, j-1, arrivalTime)) {
+                    reservationTable[make_pair(i, j-1)].push_back(arrivalTime); // Mark cell occupied at new arrival time
+                } else {
+                    // Get this node's parent and check how long to wait there for
+                    int wait_i = cellDetails[i][j].parent_i;
+                    int wait_j = cellDetails[i][j].parent_j;
+
+                    int waitTime = occupationLength(reservationTable, wait_i, wait_j, startTime + static_cast<int>(cellDetails[i][j].g));
+
+                    // Check if the wait time is below our threshold and if it is check if we can wait that time
+                    // Add this: && canIWaitHereForThisLong(reservationTable, i - 1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
+                    // Should probably check in here to see if after waiting, if the edge might be occupied
+                    if (waitTime < 3) {
+                        // Add this to reservation table
+                        for (int k = 0; k < waitTime; k++) {
+                            reservationTable[make_pair(wait_i, wait_j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                            cellDetails[wait_i][wait_j].g += 1.0;
+                            cellDetails[wait_i][wait_j].waitTime += 1;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+
                 // Set the Parent of the destination cell
                 cellDetails[i][j - 1].parent_i = i;
                 cellDetails[i][j - 1].parent_j = j;
