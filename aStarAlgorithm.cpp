@@ -317,7 +317,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             else if (closedList[i - 1][j] == false && isUnBlocked(grid, i - 1, j) == true) {
                 // Flag for execution
                 bool bodyExec = false;
-                bool edgeReserved = false;
 
                 if (isOccupiedAtThisTime(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {        // Its only reserved here because we wanna wait prematurely
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
@@ -327,29 +326,20 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
                     // Check if the wait time is below our threshold and if it is check if we can wait that time
                     // Add this: && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
-                    if (waitTime < 3 && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1)) {
+                    if (waitTime < 3) {
                         // Add this to reservation table
                         for (int k = 0; k < waitTime; k++) {
                             reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
                             cellDetails[i][j].g += 1.0;
                             cellDetails[i][j].waitTime += 1;
                         }
-
-                        // Add the edge reservation
-                        edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1);   // The time we insert is the time when we arrive at the end node
-                        edgeReserved = true;
                     } else {
                         // Don't execute the rest of the if here
                         bodyExec = true;
                     }
                 }
 
-                if (!edgeReserved && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-                    edgeReserved = true;
-                }
-
-                if (!bodyExec && edgeReserved) {
+                if (!bodyExec) {
                     gNew = cellDetails[i][j].g + 1.0;
                     hNew = calculateHValue(i - 1, j, dest);
                     fNew = gNew + hNew;
@@ -410,7 +400,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             else if (closedList[i + 1][j] == false && isUnBlocked(grid, i + 1, j) == true) {
                 // Flag for execution
                 bool bodyExec = false;
-                bool edgeReserved = false;
 
                 if (isOccupiedAtThisTime(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
@@ -419,17 +408,13 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     int waitTime = occupationLength(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
                     // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    if (waitTime < 3 && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1)) {
+                    if (waitTime < 3) {
                         // Then we wait 3 times
                         // Add this to reservation table
                         for (int k = 0; k < waitTime; k++) {
                             reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
                             cellDetails[i][j].g += 1.0;
                             cellDetails[i][j].waitTime += 1;
-
-                            // Add the edge reservation
-                            edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1);   // The time we insert is the time when we arrive at the end node
-                            edgeReserved = true;
                         }
                     } else {
                         // Don't execute the rest of the if here
@@ -437,12 +422,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     }
                 }
 
-                if (!edgeReserved && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-                    edgeReserved = true;
-                }
-
-                if (!bodyExec && edgeReserved) {
+                if (!bodyExec) {
                     gNew = cellDetails[i][j].g + 1.0;
                     hNew = calculateHValue(i + 1, j, dest);
                     fNew = gNew + hNew;
@@ -502,7 +482,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             else if (closedList[i][j + 1] == false && isUnBlocked(grid, i, j + 1) == true) {
                 // Flag for execution
                 bool bodyExec = false;
-                bool edgeReserved = false;
 
                 if (isOccupiedAtThisTime(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
@@ -511,7 +490,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     int waitTime = occupationLength(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
                     // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    if (waitTime < 3 && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1)) {
+                    if (waitTime < 3) {
                         // Then we wait 3 times
                         // Add this to reservation table
                         for (int k = 0; k < waitTime; k++) {
@@ -519,22 +498,13 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                             cellDetails[i][j].g += 1.0;
                             cellDetails[i][j].waitTime += 1;
                         }
-
-                        // Add the edge reservation
-                        edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1);   // The time we insert is the time when we arrive at the end node
-                        edgeReserved = true;
                     } else {
                         // Don't execute the rest of the if here
                         bodyExec = true;
                     }
                 }
 
-                if (!edgeReserved && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-                    edgeReserved = true;
-                }
-
-                if (!bodyExec && edgeReserved) {
+                if (!bodyExec) {
                     gNew = cellDetails[i][j].g + 1.0;
                     hNew = calculateHValue(i, j + 1, dest);
                     fNew = gNew + hNew;
@@ -594,7 +564,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             else if (closedList[i][j - 1] == false && isUnBlocked(grid, i, j - 1) == true) {
                 // Flag for execution
                 bool bodyExec = false;
-                bool edgeReserved = false;
 
                 if (isOccupiedAtThisTime(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
                     // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
@@ -603,7 +572,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                     int waitTime = occupationLength(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
 
                     // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    if (waitTime < 3 && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1)) {
+                    if (waitTime < 3) {
                         // Then we wait 3 times
                         // Add this to reservation table
                         for (int k = 0; k < waitTime; k++) {
@@ -611,22 +580,13 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                             cellDetails[i][j].g += 1.0;
                             cellDetails[i][j].waitTime += 1;
                         }
-
-                        // Add the edge reservation
-                        edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + waitTime - 1);   // The time we insert is the time when we arrive at the end node
-                        edgeReserved = true;
                     } else {
                         // Don't execute the rest of the if here
                         bodyExec = true;
                     }
                 }
 
-                if (!edgeReserved && !isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-                    edgeReserved = true;
-                }
-
-                if (!bodyExec && edgeReserved) {
+                if (!bodyExec) {
                     gNew = cellDetails[i][j].g + 1.0;
                     hNew = calculateHValue(i, j - 1, dest);
                     fNew = gNew + hNew;
