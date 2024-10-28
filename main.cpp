@@ -86,7 +86,7 @@ int main()
     // 2nd source and destination
     Pair src2 = make_pair(2, 2);
     Pair dest2 = make_pair(5, 2);
-    vector<pair<int, int>> path2 = aStarSearch(grid, src2, dest2, reservationTable, edgeReservationTable, 0);
+    vector<pair<int, int>> path2 = aStarSearch(grid, src2, dest2, reservationTable, edgeReservationTable, 0);   // Added for more commentary
 
     // 3rd source and destination
     Pair src3 = make_pair(3, 3);
