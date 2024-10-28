@@ -251,8 +251,8 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         j = p.second.second;
         closedList[i][j] = true;
 
-        // Start making an edge reservation
-        pair<int, int> startNode = make_pair(i, j);
+        // Make the end node the destination (You can look back at parent nodes for start)
+        pair<int, int> endNode = make_pair(i, j);
 
         int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 1; // Arrival time at successor cell
         if (!isOccupiedAtThisTime(reservationTable, i, j, arrivalTime)) {
@@ -307,9 +307,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i - 1, j) == true) {
-            // Make the end node for the edge reservation
-            pair<int, int> endNode = make_pair(i-1, j);
-
             // If the destination cell is the same as the current successor
             if (isDestination(i - 1, j, dest) == true) {
                 // Set the Parent of the destination cell
@@ -318,17 +315,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 printf("The destination cell is found\n");
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
-
-                // Check if the edge is occupied
-                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Make the edge reservation
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-
-                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                    reservationTable[make_pair(i-1, j)].push_back(lastTime); // Mark cell occupied at new arrival time
-
-                    return path;
-                }
+                return path;
             }
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
@@ -364,9 +351,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i + 1, j) == true) {
-            // Make the end node for the edge reservation
-            pair<int, int> endNode = make_pair(i+1, j);
-
             // If the destination cell is the same as the current successor
             if (isDestination(i + 1, j, dest) == true) {
                 // Set the Parent of the destination cell
@@ -375,17 +359,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 printf("The destination cell is found\n");
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
-
-                // Check if the edge is occupied
-                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Make the edge reservation
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time inserted is when we arrive at the end node
-
-                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                    reservationTable[make_pair(i+1, j)].push_back(lastTime); // Mark cell occupied at new arrival time
-
-                    return path;
-                }
+                return path;
             }
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
@@ -420,9 +394,6 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i, j + 1) == true) {
-            // Make the end node for the edge reservation
-            pair<int, int> endNode = make_pair(i, j+1);
-
             // If the destination cell is the same as the current successor
             if (isDestination(i, j + 1, dest) == true) {
                 // Set the Parent of the destination cell
@@ -431,16 +402,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 printf("The destination cell is found\n");
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
-
-                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Make the edge reservation
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-
-                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                    reservationTable[make_pair(i, j+1)].push_back(lastTime); // Mark cell occupied at new arrival time
-
-                    return path;
-                }
+                return path;
             }
 
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
@@ -475,11 +437,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         // Only process this cell if this is a valid one
         if (isValid(i, j - 1) == true) {
-            // Make the end node for the edge reservation
-            pair<int, int> endNode = make_pair(i, j-1);
-
-            // If the destination cell is the same as the
-            // current successor
+            // If the destination cell is the same as the current successor
             if (isDestination(i, j - 1, dest) == true) {
                 // Set the Parent of the destination cell
                 cellDetails[i][j - 1].parent_i = i;
@@ -487,16 +445,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 printf("The destination cell is found\n");
                 vector<pair<int, int>> path = tracePath(cellDetails, dest);
                 foundDest = true;
-
-                if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Make the edge reservation
-                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
-
-                    int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
-                    reservationTable[make_pair(i, j-1)].push_back(lastTime); // Mark cell occupied at new arrival time
-
-                    return path;
-                }
+                return path;
             }
 
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
