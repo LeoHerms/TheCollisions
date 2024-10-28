@@ -144,7 +144,6 @@ bool canIWaitHereForThisLong(map<pair<int, int>, vector<int>> & reservationTable
         }
     }
     return true;
-
 }
 
 bool isEdgeOccupiedAtThisTime(map<Edge, vector<int>> & edgeReservationTable, pair<int, int> startNode, pair<int, int> endNode, int time) {
@@ -258,6 +257,25 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 1; // Arrival time at successor cell
         if (!isOccupiedAtThisTime(reservationTable, i, j, arrivalTime)) {
             reservationTable[make_pair(i, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
+        } else {
+            // Get this node's parent and check how long to wait there for
+            int wait_i = cellDetails[i][j].parent_i;
+            int wait_j = cellDetails[i][j].parent_j;
+
+            int waitTime = occupationLength(reservationTable, wait_i, wait_j, startTime + static_cast<int>(cellDetails[i][j].g));
+
+            // Check if the wait time is below our threshold and if it is check if we can wait that time
+            // Add this: && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
+            if (waitTime < 3) {
+                // Add this to reservation table
+                for (int k = 0; k < waitTime; k++) {
+                    reservationTable[make_pair(wait_i, wait_j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
+                    cellDetails[wait_i][wait_j].g += 1.0;
+                    cellDetails[wait_i][wait_j].waitTime += 1;
+                }
+            } else {
+                continue;
+            }
         }
 
         /*
@@ -315,56 +333,30 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i - 1][j] == false && isUnBlocked(grid, i - 1, j) == true) {
-                // Flag for execution
-                bool bodyExec = false;
+                gNew = cellDetails[i][j].g + 1.0;
+                hNew = calculateHValue(i - 1, j, dest);
+                fNew = gNew + hNew;
 
-                if (isOccupiedAtThisTime(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {        // Its only reserved here because we wanna wait prematurely
-                    // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
-                    // If we find that waiting is better, we should wait. Else, continue and reroute.
-                    // There will be a tweakable parameter for how long a bot should wait before rerouting.
-                    int waitTime = occupationLength(reservationTable, i-1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+                // If it isn’t on the open list, add it to
+                // the open list. Make the current square
+                // the parent of this square. Record the
+                // f, g, and h costs of the square cell
+                //                OR
+                // If it is on the open list already, check
+                // to see if this path to that square is
+                // better, using 'f' cost as the measure.
+                if (cellDetails[i - 1][j].f == FLT_MAX
+                    || cellDetails[i - 1][j].f > fNew) {
+                    openList.insert(make_pair(
+                            fNew, make_pair(i - 1, j)));
 
-                    // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    // Add this: && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
-                    if (waitTime < 3) {
-                        // Add this to reservation table
-                        for (int k = 0; k < waitTime; k++) {
-                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
-                            cellDetails[i][j].g += 1.0;
-                            cellDetails[i][j].waitTime += 1;
-                        }
-                    } else {
-                        // Don't execute the rest of the if here
-                        bodyExec = true;
+                    // Update the details of this cell
+                    cellDetails[i - 1][j].f = fNew;
+                    cellDetails[i - 1][j].g = gNew;
+                    cellDetails[i - 1][j].h = hNew;
+                    cellDetails[i - 1][j].parent_i = i;
+                    cellDetails[i - 1][j].parent_j = j;
                     }
-                }
-
-                if (!bodyExec) {
-                    gNew = cellDetails[i][j].g + 1.0;
-                    hNew = calculateHValue(i - 1, j, dest);
-                    fNew = gNew + hNew;
-
-                    // If it isn’t on the open list, add it to
-                    // the open list. Make the current square
-                    // the parent of this square. Record the
-                    // f, g, and h costs of the square cell
-                    //                OR
-                    // If it is on the open list already, check
-                    // to see if this path to that square is
-                    // better, using 'f' cost as the measure.
-                    if (cellDetails[i - 1][j].f == FLT_MAX
-                        || cellDetails[i - 1][j].f > fNew) {
-                        openList.insert(make_pair(
-                                fNew, make_pair(i - 1, j)));
-
-                        // Update the details of this cell
-                        cellDetails[i - 1][j].f = fNew;
-                        cellDetails[i - 1][j].g = gNew;
-                        cellDetails[i - 1][j].h = hNew;
-                        cellDetails[i - 1][j].parent_i = i;
-                        cellDetails[i - 1][j].parent_j = j;
-                        }
-                }
             }
         }
 
@@ -398,55 +390,29 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i + 1][j] == false && isUnBlocked(grid, i + 1, j) == true) {
-                // Flag for execution
-                bool bodyExec = false;
+                gNew = cellDetails[i][j].g + 1.0;
+                hNew = calculateHValue(i + 1, j, dest);
+                fNew = gNew + hNew;
 
-                if (isOccupiedAtThisTime(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
-                    // If we find that waiting is better, we should wait. Else, continue and reroute.
-                    // There will be a tweakable parameter for how long a bot should wait before rerouting.
-                    int waitTime = occupationLength(reservationTable, i+1, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
-
-                    // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    if (waitTime < 3) {
-                        // Then we wait 3 times
-                        // Add this to reservation table
-                        for (int k = 0; k < waitTime; k++) {
-                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
-                            cellDetails[i][j].g += 1.0;
-                            cellDetails[i][j].waitTime += 1;
-                        }
-                    } else {
-                        // Don't execute the rest of the if here
-                        bodyExec = true;
+                // If it isn’t on the open list, add it to
+                // the open list. Make the current square
+                // the parent of this square. Record the
+                // f, g, and h costs of the square cell
+                //                OR
+                // If it is on the open list already, check
+                // to see if this path to that square is
+                // better, using 'f' cost as the measure.
+                if (cellDetails[i + 1][j].f == FLT_MAX
+                    || cellDetails[i + 1][j].f > fNew) {
+                    openList.insert(make_pair(
+                            fNew, make_pair(i + 1, j)));
+                    // Update the details of this cell
+                    cellDetails[i + 1][j].f = fNew;
+                    cellDetails[i + 1][j].g = gNew;
+                    cellDetails[i + 1][j].h = hNew;
+                    cellDetails[i + 1][j].parent_i = i;
+                    cellDetails[i + 1][j].parent_j = j;
                     }
-                }
-
-                if (!bodyExec) {
-                    gNew = cellDetails[i][j].g + 1.0;
-                    hNew = calculateHValue(i + 1, j, dest);
-                    fNew = gNew + hNew;
-
-                    // If it isn’t on the open list, add it to
-                    // the open list. Make the current square
-                    // the parent of this square. Record the
-                    // f, g, and h costs of the square cell
-                    //                OR
-                    // If it is on the open list already, check
-                    // to see if this path to that square is
-                    // better, using 'f' cost as the measure.
-                    if (cellDetails[i + 1][j].f == FLT_MAX
-                        || cellDetails[i + 1][j].f > fNew) {
-                        openList.insert(make_pair(
-                                fNew, make_pair(i + 1, j)));
-                        // Update the details of this cell
-                        cellDetails[i + 1][j].f = fNew;
-                        cellDetails[i + 1][j].g = gNew;
-                        cellDetails[i + 1][j].h = hNew;
-                        cellDetails[i + 1][j].parent_i = i;
-                        cellDetails[i + 1][j].parent_j = j;
-                        }
-                }
             }
         }
 
@@ -480,53 +446,27 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i][j + 1] == false && isUnBlocked(grid, i, j + 1) == true) {
-                // Flag for execution
-                bool bodyExec = false;
+                gNew = cellDetails[i][j].g + 1.0;
+                hNew = calculateHValue(i, j + 1, dest);
+                fNew = gNew + hNew;
 
-                if (isOccupiedAtThisTime(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
-                    // If we find that waiting is better, we should wait. Else, continue and reroute.
-                    // There will be a tweakable parameter for how long a bot should wait before rerouting.
-                    int waitTime = occupationLength(reservationTable, i, j+1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+                // If it isn’t on the open list, add it to
+                // the open list. Make the current square
+                // the parent of this square. Record the
+                // f, g, and h costs of the square cell
+                //                OR
+                // If it is on the open list already, check
+                // to see if this path to that square is
+                // better, using 'f' cost as the measure.
+                if (cellDetails[i][j + 1].f == FLT_MAX || cellDetails[i][j + 1].f > fNew) {
+                    openList.insert(make_pair(fNew, make_pair(i, j + 1)));
 
-                    // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    if (waitTime < 3) {
-                        // Then we wait 3 times
-                        // Add this to reservation table
-                        for (int k = 0; k < waitTime; k++) {
-                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
-                            cellDetails[i][j].g += 1.0;
-                            cellDetails[i][j].waitTime += 1;
-                        }
-                    } else {
-                        // Don't execute the rest of the if here
-                        bodyExec = true;
-                    }
-                }
-
-                if (!bodyExec) {
-                    gNew = cellDetails[i][j].g + 1.0;
-                    hNew = calculateHValue(i, j + 1, dest);
-                    fNew = gNew + hNew;
-
-                    // If it isn’t on the open list, add it to
-                    // the open list. Make the current square
-                    // the parent of this square. Record the
-                    // f, g, and h costs of the square cell
-                    //                OR
-                    // If it is on the open list already, check
-                    // to see if this path to that square is
-                    // better, using 'f' cost as the measure.
-                    if (cellDetails[i][j + 1].f == FLT_MAX || cellDetails[i][j + 1].f > fNew) {
-                        openList.insert(make_pair(fNew, make_pair(i, j + 1)));
-
-                        // Update the details of this cell
-                        cellDetails[i][j + 1].f = fNew;
-                        cellDetails[i][j + 1].g = gNew;
-                        cellDetails[i][j + 1].h = hNew;
-                        cellDetails[i][j + 1].parent_i = i;
-                        cellDetails[i][j + 1].parent_j = j;
-                    }
+                    // Update the details of this cell
+                    cellDetails[i][j + 1].f = fNew;
+                    cellDetails[i][j + 1].g = gNew;
+                    cellDetails[i][j + 1].h = hNew;
+                    cellDetails[i][j + 1].parent_i = i;
+                    cellDetails[i][j + 1].parent_j = j;
                 }
             }
         }
@@ -562,56 +502,30 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 // If the successor is already on the closed list or if it is blocked, then ignore it.
                 // Else do the following
             else if (closedList[i][j - 1] == false && isUnBlocked(grid, i, j - 1) == true) {
-                // Flag for execution
-                bool bodyExec = false;
+                gNew = cellDetails[i][j].g + 1.0;
+                hNew = calculateHValue(i, j - 1, dest);
+                fNew = gNew + hNew;
 
-                if (isOccupiedAtThisTime(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
-                    // Here we should make a consideration for just waiting for the cell to be free instead of going around completely
-                    // If we find that waiting is better, we should wait. Else, continue and reroute.
-                    // There will be a tweakable parameter for how long a bot should wait before rerouting.
-                    int waitTime = occupationLength(reservationTable, i, j-1, startTime + static_cast<int>(cellDetails[i][j].g) + 2);
+                // If it isn’t on the open list, add it to
+                // the open list. Make the current square
+                // the parent of this square. Record the
+                // f, g, and h costs of the square cell
+                //                OR
+                // If it is on the open list already, check
+                // to see if this path to that square is
+                // better, using 'f' cost as the measure.
+                if (cellDetails[i][j - 1].f == FLT_MAX
+                    || cellDetails[i][j - 1].f > fNew) {
+                    openList.insert(make_pair(
+                            fNew, make_pair(i, j - 1)));
 
-                    // Check if the wait time is below our threshold and if it is check if we can wait that time
-                    if (waitTime < 3) {
-                        // Then we wait 3 times
-                        // Add this to reservation table
-                        for (int k = 0; k < waitTime; k++) {
-                            reservationTable[make_pair(i, j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
-                            cellDetails[i][j].g += 1.0;
-                            cellDetails[i][j].waitTime += 1;
-                        }
-                    } else {
-                        // Don't execute the rest of the if here
-                        bodyExec = true;
+                    // Update the details of this cell
+                    cellDetails[i][j - 1].f = fNew;
+                    cellDetails[i][j - 1].g = gNew;
+                    cellDetails[i][j - 1].h = hNew;
+                    cellDetails[i][j - 1].parent_i = i;
+                    cellDetails[i][j - 1].parent_j = j;
                     }
-                }
-
-                if (!bodyExec) {
-                    gNew = cellDetails[i][j].g + 1.0;
-                    hNew = calculateHValue(i, j - 1, dest);
-                    fNew = gNew + hNew;
-
-                    // If it isn’t on the open list, add it to
-                    // the open list. Make the current square
-                    // the parent of this square. Record the
-                    // f, g, and h costs of the square cell
-                    //                OR
-                    // If it is on the open list already, check
-                    // to see if this path to that square is
-                    // better, using 'f' cost as the measure.
-                    if (cellDetails[i][j - 1].f == FLT_MAX
-                        || cellDetails[i][j - 1].f > fNew) {
-                        openList.insert(make_pair(
-                                fNew, make_pair(i, j - 1)));
-
-                        // Update the details of this cell
-                        cellDetails[i][j - 1].f = fNew;
-                        cellDetails[i][j - 1].g = gNew;
-                        cellDetails[i][j - 1].h = hNew;
-                        cellDetails[i][j - 1].parent_i = i;
-                        cellDetails[i][j - 1].parent_j = j;
-                        }
-                }
             }
         }
     }
