@@ -17,3 +17,6 @@
 2969	3244	7518029840714946	Collisions.exe	ad941d198dbe7f04
 7	2834	7518030817790186	CMakeFiles/Collisions.dir/main.cpp.obj	a87e4b23c36824ea
 2834	3103	7518030846061702	Collisions.exe	ad941d198dbe7f04
+7	2990	7518036182423717	CMakeFiles/Collisions.dir/main.cpp.obj	a87e4b23c36824ea
+16	3113	7518036182513794	CMakeFiles/Collisions.dir/aStarAlgorithm.cpp.obj	4f147103d1eee3ba
+3113	3392	7518036213478998	Collisions.exe	ad941d198dbe7f04

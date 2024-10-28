@@ -261,7 +261,19 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
 
         int arrivalTime = startTime + static_cast<int>(cellDetails[i][j].g) + 1; // Arrival time at successor cell
         if (!isOccupiedAtThisTime(reservationTable, i, j, arrivalTime)) {
+            // Before we add this to the reservation table, we need to check if the edge is occupied
+            if (!cellDetails[i][j].isStart) {   // Make sure its not a start node
+                pair<int, int> startNode = make_pair(cellDetails[i][j].parent_i, cellDetails[i][j].parent_j);
+                if (isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 1)) {
+                    continue;   // Look for other way as you cant wait in this case
+                }
+            }
+
             reservationTable[make_pair(i, j)].push_back(arrivalTime); // Mark cell occupied at new arrival time
+
+            // Here you make an edge reservation
+            pair<int, int> startNode = make_pair(cellDetails[i][j].parent_i, cellDetails[i][j].parent_j);
+            edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 1);
         } else {
             // Get this node's parent and check how long to wait there for
             int wait_i = cellDetails[i][j].parent_i;
@@ -273,12 +285,24 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             // Add this: && canIWaitHereForThisLong(reservationTable, i, j, startTime + static_cast<int>(cellDetails[i][j].g) + 2, waitTime)
             // Should probably check in here to see if after waiting, if the edge might be occupied
             if (waitTime < 3) {
+                // Before reserving check if after the wait time, if there will be a swap
+                if (!cellDetails[i][j].isStart) {   // Make sure its not a start node
+                    pair<int, int> startNode = make_pair(cellDetails[i][j].parent_i, cellDetails[i][j].parent_j);
+                    if (isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 1 + waitTime)) {
+                        continue;   // Look for other way as you cant wait in this case
+                    }
+                }
+
                 // Add this to reservation table
                 for (int k = 0; k < waitTime; k++) {
                     reservationTable[make_pair(wait_i, wait_j)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2 + k);
                     cellDetails[wait_i][wait_j].g += 1.0;
                     cellDetails[wait_i][wait_j].waitTime += 1;
                 }
+
+                // Add the edge reservation
+                pair<int, int> startNode = make_pair(cellDetails[i][j].parent_i, cellDetails[i][j].parent_j);
+                edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 1 + waitTime);
             } else {
                 continue;
             }
