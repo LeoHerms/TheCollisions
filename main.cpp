@@ -79,13 +79,13 @@ int main()
     map<Edge, vector<int>> edgeReservationTable;  // This will be used across all aStarSearch calls for edges
 
     // Source is the left-most bottom-most corner
-    Pair src1 = make_pair(2, 2);
-    Pair dest1 = make_pair(3, 2);   // 5, 0
+    Pair src1 = make_pair(2, 0);
+    Pair dest1 = make_pair(2, 1);   // 5, 0
     vector<pair<int, int>> path1 = aStarSearch(grid, src1, dest1, reservationTable, edgeReservationTable, 0);
 
     // 2nd source and destination
-    Pair src2 = make_pair(3, 2);
-    Pair dest2 = make_pair(2, 2);
+    Pair src2 = make_pair(2, 1);
+    Pair dest2 = make_pair(2, 0);
     vector<pair<int, int>> path2 = aStarSearch(grid, src2, dest2, reservationTable, edgeReservationTable, 0);
 
     // 3rd source and destination

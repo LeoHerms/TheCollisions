@@ -467,6 +467,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 foundDest = true;
 
                 if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
+                    // Make the edge reservation
+                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
+
                     int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
                     reservationTable[make_pair(i, j+1)].push_back(lastTime); // Mark cell occupied at new arrival time
 
@@ -546,6 +549,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
                 foundDest = true;
 
                 if (!isEdgeOccupiedAtThisTime(edgeReservationTable, startNode, endNode, startTime + static_cast<int>(cellDetails[i][j].g) + 2)) {
+                    // Make the edge reservation
+                    edgeReservationTable[make_pair(startNode, endNode)].push_back(startTime + static_cast<int>(cellDetails[i][j].g) + 2);   // The time we insert is the time when we arrive at the end node
+
                     int lastTime = startTime + static_cast<int>(cellDetails[i][j].g) + 2; // Arrival time at successor cell
                     reservationTable[make_pair(i, j-1)].push_back(lastTime); // Mark cell occupied at new arrival time
 
