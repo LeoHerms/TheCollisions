@@ -308,7 +308,9 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
             }
         }
 
-        // COULD DO ONE CENTRAL DESTINATION CHECK FOR OCCUPANCY AND SWAPS
+        // COULD DO ONE CENTRAL DESTINATION CHECK FOR OCCUPANCY AND SWAPS (THIS IS JUST FOR CLEAN CODE)
+        // Make sure to add the start and end node IRL cases
+
 
         /*
          Generating all the 4 successors of this cell
