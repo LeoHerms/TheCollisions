@@ -2,8 +2,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-#define ROW 9
-#define COL 10
+#define ROW 9       // This shall be the default grid row size
+#define COL 10      // This shall be the default grid column size
 
 // Creating a shortcut for int, int pair type
 typedef pair<int, int> Pair;
@@ -24,12 +24,11 @@ struct cell {
     // Add a wait time
     int waitTime;
 
-    // is it a start?
+    // We need to know if this is a start, because it shouldn't have parents
     bool isStart;
 };
 
-// A Utility Function to check whether given cell (row, col)
-// is a valid cell or not.
+// A Utility Function to check whether given cell (row, col) is a valid cell or not.
 bool isValid(int row, int col)
 {
     // Returns true if row number and column number
@@ -38,8 +37,7 @@ bool isValid(int row, int col)
            && (col < COL);
 }
 
-// A Utility Function to check whether the given cell is
-// blocked or not
+// A Utility Function to check whether the given cell is blocked or not
 bool isUnBlocked(int grid[][COL], int row, int col)
 {
     // Returns true if the cell is not blocked else false
@@ -49,8 +47,7 @@ bool isUnBlocked(int grid[][COL], int row, int col)
         return (false);
 }
 
-// A Utility Function to check whether destination cell has
-// been reached or not
+// A Utility Function to check whether destination cell has been reached or not
 bool isDestination(int row, int col, Pair dest)
 {
     if (row == dest.first && col == dest.second)
@@ -68,8 +65,7 @@ double calculateHValue(int row, int col, Pair dest)
             + (col - dest.second) * (col - dest.second)));
 }
 
-// A Utility Function to trace the path from the source
-// to destination
+// A Utility Function to trace the path from the source to destination
 vector<pair<int, int>> tracePath(cell cellDetails[][COL], Pair dest)
 {
     //printf("\nThe Path is ");
@@ -111,6 +107,7 @@ vector<pair<int, int>> tracePath(cell cellDetails[][COL], Pair dest)
     return path;
 }
 
+// This is a helper function to check if a cell is occupied at a certain time
 bool isOccupiedAtThisTime(map<pair<int, int>, vector<int>> & reservationTable, int row, int col, int time) {
     if (reservationTable.find(make_pair(row, col)) != reservationTable.end()) {
         vector<int> times = reservationTable[make_pair(row, col)];
@@ -123,6 +120,7 @@ bool isOccupiedAtThisTime(map<pair<int, int>, vector<int>> & reservationTable, i
     return false;
 }
 
+// This is a helper function to check how long a cell is occupied for
 int occupationLength(map<pair<int, int>, vector<int>> & reservationTable, int row, int col, int time) {
     // From the start time, find how long that cell is continuously occupied for
     int length = 0;
@@ -139,6 +137,7 @@ int occupationLength(map<pair<int, int>, vector<int>> & reservationTable, int ro
     return length;
 }
 
+// This is a helper function to check if a cell is occupied at a certain time
 bool canIWaitHereForThisLong(map<pair<int, int>, vector<int>> & reservationTable, int row, int col, int time, int waitTime) {
     // Check if the cell is occupied for the next waitTime
     for (int i = 0; i < waitTime; i++) {
@@ -149,6 +148,7 @@ bool canIWaitHereForThisLong(map<pair<int, int>, vector<int>> & reservationTable
     return true;
 }
 
+// This is a helper function to check if an edge is occupied at a certain time
 bool isEdgeOccupiedAtThisTime(map<Edge, vector<int>> & edgeReservationTable, pair<int, int> startNode, pair<int, int> endNode, int time) {
     if (edgeReservationTable.find(make_pair(endNode, startNode)) != edgeReservationTable.end()) {
         vector<int> times = edgeReservationTable[make_pair(endNode, startNode)];
@@ -161,9 +161,7 @@ bool isEdgeOccupiedAtThisTime(map<Edge, vector<int>> & edgeReservationTable, pai
     return false;
 }
 
-// A Function to find the shortest path between
-// a given source cell to a destination cell according
-// to A* Search Algorithm
+// A Function to find the shortest path between a given source cell to a destination cell according to A* Search Algorithm
 vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pair<int, int>, vector<int>> & reservationTable, map<Edge, vector<int>> & edgeReservationTable, int startTime)
 {
     // If the source is out of range
@@ -193,14 +191,11 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         return {};
     }
 
-    // Create a closed list and initialise it to false which
-    // means that no cell has been included yet. This closed
-    // list is implemented as a boolean 2D array
+    // Create a closed list and initialise it to false which means that no cell has been included yet. This closed list is implemented as a boolean 2D array
     bool closedList[ROW][COL];
     memset(closedList, false, sizeof(closedList));
 
-    // Declare a 2D array of structure to hold the details
-    // of that cell
+    // Declare a 2D array of structure to hold the details of that cell
     cell cellDetails[ROW][COL];
 
     int i, j;
@@ -234,16 +229,17 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
      and i, j are the row and column index of that cell
      Note that 0 <= i <= ROW-1 & 0 <= j <= COL-1
      This open list is implemented as a set of pair of
-     pair.*/
+     pair.
+        */
     set<pPair> openList;
 
-    // Put the starting cell on the open list and set its
-    // 'f' as 0
+    // Put the starting cell on the open list and set its 'f' as 0
     openList.insert(make_pair(0.0, make_pair(i, j)));
 
-    // We set this boolean value as false as initially
-    // the destination is not reached.
+    // We set this boolean value as false as initially the destination is not reached.
     bool foundDest = false;
+
+    int time = startTime + 1;
 
     while (!openList.empty()) {
         pPair p = *openList.begin();
@@ -255,6 +251,7 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         i = p.second.first;
         j = p.second.second;
         closedList[i][j] = true;
+        time++;
 
         // Make the end node the destination (You can look back at parent nodes for start)
         pair<int, int> endNode = make_pair(i, j);
@@ -309,6 +306,13 @@ vector<pair<int, int>> aStarSearch(int grid[][COL], Pair src, Pair dest, map<pai
         }
 
         // COULD DO ONE CENTRAL DESTINATION CHECK FOR OCCUPANCY AND SWAPS (THIS IS JUST FOR CLEAN CODE)
+
+        /* Would look something like
+         * isDestination()? check if its occupied, see if we can wait, see if to get there we encountered a swap
+         *
+         */
+
+
         // Make sure to add the start and end node IRL cases
 
 
